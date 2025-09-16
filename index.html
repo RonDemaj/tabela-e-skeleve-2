@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela e skeleve</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 500px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    input {
+      width: 120px;
+      padding: 5px;
+      text-align: right;
+    }
+    button {
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .save-btn {
+      background: #28a745;
+      color: white;
+    }
+    .save-btn:hover {
+      background: #218838;
+    }
+    #totals {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+    }
+    #totals .original {
+      color: green;
+      font-size: 18px;
+      margin-top: 5px;
+      display: block;
+    }
+    #clear-btn {
+      margin-top: 15px;
+      width: 100%;
+      background: #dc3545;
+      color: white;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #clear-btn:hover {
+      background: #c82333;
+    }
+    #month-select {
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <label>Zgjidh Muajin:</label>
+    <select id="month-select">
+      <option value="janar">Janar</option>
+      <option value="shkurt">Shkurt</option>
+      <option value="mars">Mars</option>
+      <option value="prill">Prill</option>
+      <option value="maj">Maj</option>
+      <option value="qershor">Qershor</option>
+      <option value="korrik">Korrik</option>
+      <option value="gusht">Gusht</option>
+      <option value="shtator">Shtator</option>
+      <option value="tetor">Tetor</option>
+      <option value="nëntor">Nëntor</option>
+      <option value="dhjetor">Dhjetor</option>
+    </select>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Numri i skeleve</th>
+          <th>Ruaj</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- JavaScript do ta mbushë tabelën -->
+      </tbody>
+    </table>
+
+    <div id="totals">
+      <span id="barazimi"></span>
+      <span id="origjinalja" class="original"></span>
+    </div>
+
+    <button id="clear-btn">Pastro të Dhënat</button>
+  </div>
+
+  <script>
+    const tbody = document.getElementById("table-body");
+    const barazimiSpan = document.getElementById("barazimi");
+    const origjinaljaSpan = document.getElementById("origjinalja");
+    const clearBtn = document.getElementById("clear-btn");
+    const monthSelect = document.getElementById("month-select");
+
+    // Ruaj të dhënat e të gjithë muajve
+    let allMonthsData = JSON.parse(localStorage.getItem("allMonthsData")) || {};
+
+    // Merr muaji aktual ose default Janar
+    let currentMonth = monthSelect.value;
+    if (!allMonthsData[currentMonth]) allMonthsData[currentMonth] = Array(31).fill("");
+
+    // Funksioni për krijimin e tabelës
+    function createTable() {
+      tbody.innerHTML = "";
+      const data = allMonthsData[currentMonth];
+
+      for (let i = 0; i < 31; i++) {
+        const tr = document.createElement("tr");
+
+        const tdDay = document.createElement("td");
+        tdDay.textContent = i + 1;
+
+        const tdInput = document.createElement("td");
+        const input = document.createElement("input");
+        input.type = "number";
+        input.placeholder = "Shkruaj...";
+        input.value = data[i] || "";
+        input.dataset.index = i;
+
+        const tdButton = document.createElement("td");
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Ruaj";
+        saveBtn.className = "save-btn";
+
+        saveBtn.addEventListener("click", () => {
+          const value = input.value;
+          const index = input.dataset.index;
+          data[index] = value ? parseFloat(value) : "";
+          allMonthsData[currentMonth] = data;
+          localStorage.setItem("allMonthsData", JSON.stringify(allMonthsData));
+          updateTotals();
+        });
+
+        tdInput.appendChild(input);
+        tdButton.appendChild(saveBtn);
+        tr.appendChild(tdDay);
+        tr.appendChild(tdInput);
+        tr.appendChild(tdButton);
+        tbody.appendChild(tr);
+      }
+      updateTotals();
+    }
+
+    // Përditëson totals vetëm për muaji aktual
+    function updateTotals() {
+      const data = allMonthsData[currentMonth];
+      let sum = 0;
+      data.forEach(v => { if(v !== "" && !isNaN(v)) sum += parseFloat(v); });
+      barazimiSpan.textContent = "Barazimi Total × 1.75: " + (sum*1.75).toFixed(2);
+      origjinaljaSpan.textContent = "Shuma e skeleve: " + sum.toFixed(2);
+    }
+
+    // Ndryshimi i muajit
+    monthSelect.addEventListener("change", () => {
+      currentMonth = monthSelect.value;
+      if (!allMonthsData[currentMonth]) allMonthsData[currentMonth] = Array(31).fill("");
+      createTable();
+    });
+
+    // Pastrimi i të dhënave të muajit aktual
+    clearBtn.addEventListener("click", () => {
+      if(confirm(`A je i sigurt që do t’i fshish të dhënat për ${currentMonth}?`)) {
+        allMonthsData[currentMonth] = Array(31).fill("");
+        localStorage.setItem("allMonthsData", JSON.stringify(allMonthsData));
+        createTable();
+      }
+    });
+
+    // Inicializo tabelën për muajin fillestar
+    createTable();
+  </script>
+</body>
+</html>
